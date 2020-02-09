@@ -1,0 +1,11 @@
+{
+  "name": "Clax",
+  "port": 3000,
+  "jwtPrivateKey": "",
+  "dbConfig": {
+    "host": "mongodb+srv://",
+    "dbName": "claxdb",
+    "dbPass": "Clax2020Activists",
+    "dbUser": "claxapi"
+  }
+}
