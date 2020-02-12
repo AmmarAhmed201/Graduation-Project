@@ -1,23 +1,30 @@
 const config = require("config");
 
-module.exports = function() {
-  // if "jwtPrivateKey" is not defined exit the program.
-  if (!config.get("jwtPrivateKey")) {
+//Determine Jwt Keys from the environment file
+module.exports.jwtKeys = function() {
+  const passengerJwt = process.env.JWTPASSENGER
+  const driverJwt = process.env.JWTDRIVER
+  const adminJwt = process.env.JWTADMIN
+  if (!(userJwt && driverJwt && adminJwt)) {
     throw new Error("FATAL ERROR: jwtPrivateKey is not defined.");
-  }
-
-  // Determine PORT
-  const port = process.env.PORT || config.get("port");
-
-  // get connection string from the config file
-  const dbHost = config.get("dbConfig.host");
-  const dbUser = config.get("dbConfig.user");
-  const dbPass = config.get("dbConfig.password");
-  const dbName = config.get("dbConfig.name");
-
-  const connectionString = `${dbHost}://${dbUser}:
-    ${dbPass}@claxdb-g26dp.gcp.mongodb.net/
-    ${dbName}?retryWrites=true&w=majority`;
-
-  return [connectionString, port];
+  } 
+  return {passengerJwt, driverJwt, adminJwt};
 };
+
+//get port from the configuration file
+module.exports.port = function() {
+const port = config.get("port");
+if (!port) {
+  throw new Error("FATAL ERROR: port is not defined.");
+}
+return port;
+};
+
+//get connection string from the environment file
+module.exports.connectionString = function() {
+const connectionString = process.env.URI
+if (!(connectionString)) {
+  throw new Error("FATAL ERROR: connectionString is not defined.");
+}
+return connectionString;
+}

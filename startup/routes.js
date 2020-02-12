@@ -1,17 +1,23 @@
+// Modules
 const express = require("express");
-const trips = require("../routes/trips");
-const error = require("../middlewares/error");
-const passengers = require("../routes/passengers");
-const passengersLogin = require("../routes/passengerLogin");
 const morgan = require("morgan");
 
+// Middlewares
+const error = require("../middlewares/error");
+
+// Routes
+//----
 module.exports = function(app) {
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
-  //app.use(express.static("public"));
-  app.use(morgan("tiny"));
-  app.use("/api/trips", trips);
-  app.use("/api/passengers", passengers);
-  app.use("/api/login", passengersLogin);
-  app.use(error);
+  // Apply Middlewares
+  app.use(express.json()); // Reparse body of the request into json object
+  app.use(express.urlencoded({ extended: true })); // Reparse url to encoded url payload
+  //app.use(express.static("public")); // For static files if needed
+  // in development mode only
+  if(app.get('env') === 'development')
+  {
+    app.use(morgan("tiny"));
+  }
+  
+  // Apply Routers
+  //----
 };
