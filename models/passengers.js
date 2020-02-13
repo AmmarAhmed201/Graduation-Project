@@ -1,6 +1,7 @@
 // Modules
 const mongoose = require("mongoose");
-const Joi = require("joi");
+const Joi = require("@hapi/joi");
+Joi.objectId = require('joi-objectid')(Joi)
 const PasswordComplexity = require("joi-password-complexity");
 const jwt = require("jsonwebtoken");
 // Includes
@@ -47,21 +48,59 @@ const passengerSchema = new mongoose.Schema({
   phone_verified: {type: Boolean, default: false},
   tripsCount: {
     type: Number,
-    validate: {
-      validator: (c)=> {return Number.isInteger(c);},
-      message: "tripsCount should be an integer"
-    }
+    default: 0,
+    validate:
+      [
+        {
+          validator: (c)=> {return Number.isInteger(c);},
+          message: "tripsCount should be an integer"
+        },
+        {
+          validator: (c)=> {return c >= 0;},
+          message: "tripsCount should be a positive number"
+        }
+      ]
   },
   rate: {
     type: Number,
     min: 0,
     max: 5,
     default: 0,
-    set: (r) => {return Math.round(r)},
-    get: (r) => {return Math.round(r)}
+      // Calculate the rate as Average
+    set: function(r){return ((this.rate * this.tripsCount) + r) / (this.tripsCount + 1)},
+    get: function(r){return Math.round(r)}  // Return the integer rate
   },
-  balance: {type: Number},
-  maxLoan: {type: Number},
+  balance: {
+    type: Number,
+    default: 0,
+    validate: {
+      validator: function(b){return b >= this.balance - this.maxLoan},
+      message: "balance can't be less than maxLoan value"
+    }
+  },
+  loanedAmount: {
+    type: Number,
+    default: 0,
+    validate:
+    [
+      {
+        validator: function(l){return l >= 0},
+        message: "loanedAmount should be a positive value"
+      },
+      {
+        validator: function(l){return l <= this.maxLoan},
+        message: "loanedAmount must be less than or equal maxLoan"
+      }
+    ] 
+  },
+  maxLoan: {
+    type: Number,
+    default: 0,
+    validate:{
+      validator: function(m){return m >= 0},
+      message: "maxLoan should be a positive value"
+    }
+  },
   _currentTrip:{type: mongoose.ObjectId, ref: 'CurrentTrips'},
   _pastTrips: [{type: mongoose.ObjectId, ref: 'PastTrips'}],
   _offers: [{type: mongoose.ObjectId, ref: 'Offers'}],
@@ -77,32 +116,83 @@ passengerSchema.methods.generateToken = function(expiry) {
   );
 };
 
-// Model
-const Passengers = mongoose.model("Passengers", passengerSchema);
-
 
 ////****************** Passenger Validation  ******************
-// Model Validation
-function validatePassenger(passenger) {
-  // Set Password Complexity
-  const complexityOptions = {
-    min: 8,
-    max: 30,
-    lowerCase: 1,
-    upperCase: 1,
-    numeric: 1,
-    requirementCount: 2
-  };
-  // Set Schema Validation
-  const schema = {
-    email: Joi.string()
-      .min(5)
-      .max(64)
-      .required()
-      .email(),
-    password: new PasswordComplexity(complexityOptions).required()
-  };
-  return Joi.validate(passenger, schema);
+// Set Password Complexity
+const complexityOptions = {
+  min: 8,
+  max: 30,
+  lowerCase: 1,
+  upperCase: 1,
+  numeric: 1,
+  requirementCount: 2
+};
+const validatePassword = function(pass){
+  return new PasswordComplexity(complexityOptions).validate(pass);
 }
 
-module.exports.Passengers = Passengers;
+// Set Validation Schema 
+const validationSchema = Joi.object().keys({
+  name: Joi.string()
+  .required()
+  .trim()
+  .min(4)
+  .max(64),
+  mail: Joi.string()
+  .email()
+  .required()
+  .trim()
+  .lowercase()
+  .min(6)
+  .max(64),
+  //pass: new PasswordComplexity(complexityOptions),
+  phone: Joi.string()
+  .required()
+  .trim()
+  .min(11)
+  .max(11)
+  .pattern(RegExps.phoneRegExp, 'Phone Number'),
+  tripsCount: Joi.number()
+  .integer()
+  .min(0),
+  rate: Joi.number()
+  .min(0)
+  .max(5),
+  balance: Joi.number(),
+  loanedAmount: Joi.number()
+  .min(0),
+  maxLoan: Joi.number()
+  .min(0),
+  _currentTrip: Joi.objectId(),
+  _pastTrips: Joi.array().items(Joi.objectId()),
+  _offers: Joi.array().items(Joi.objectId()),
+  _complains: Joi.array().items(Joi.objectId())
+});
+const validatePassenger =function(passenger){
+  return validationSchema.validate(passenger);
+}
+
+////****************** Passenger Login Validation  ******************
+// Set Login Schema
+const loginSchema =  Joi.object().keys({
+  mail: Joi.string()
+  .email()
+  .required()
+  .trim()
+  .lowercase()
+  .min(6)
+  .max(64),
+  pass: Joi.string()
+  .required()
+  .min(8)
+  .max(30)
+});
+const validatePassengerLogin = function(passengerRequest)
+{
+    return loginSchema.validate(passengerRequest);
+}
+
+module.exports.Passengers = mongoose.model("Passengers", passengerSchema);
+module.exports.validatePassenger = validatePassenger;
+module.exports.validatePassword = validatePassword;
+module.exports.validatePassengerLogin = validatePassengerLogin;
