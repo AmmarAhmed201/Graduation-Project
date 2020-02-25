@@ -2,11 +2,12 @@ const mongoose = require("mongoose");
 
 // Lines Model
 const lineSchema = new mongoose.Schema({
+    id: {type: Number},
     from: {type: String},
     to: {type: String},
     direction: {type: Boolean},
     cost: {type: Number},
-    _stations: [{type: mongoose.ObjectId, ref: 'Stations'}]
+    stations:[{type: String}]
 });
 const Lines = mongoose.model("Lines", lineSchema);
 
