@@ -10,6 +10,7 @@ const morgan = require("morgan");
 // Import Routes
 const stationRoute=require('../routes/stations');
 const linesRoute=require('../routes/lines');
+const driversRoute=require('../routes/driver');
 
 module.exports = function(app) {
     // Apply Essential Middlewares
@@ -28,6 +29,7 @@ module.exports = function(app) {
     // Apply Routes
     app.use("/api/user",stationRoute);
     app.use("/api/user",linesRoute);
+    app.use("/api/user",driversRoute); 
 
 
 };

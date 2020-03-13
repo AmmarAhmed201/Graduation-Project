@@ -1,8 +1,8 @@
-const router=require('express').Router();
-const {lines} = require('../controllers/lines');
+const router = require('express').Router();
+const { lines } = require('../controllers/lines');
 
 
 
-router.post('/line',lines);
+router.post('/line', lines);
 
-module.exports=router;
+module.exports = router;
