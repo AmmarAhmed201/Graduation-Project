@@ -12,7 +12,7 @@
   "dependencies": {
     "@hapi/joi": "^17.1.0",
     "balanced-match": "^1.0.0",
-    "bcrypt": "^3.0.7",
+    "bcrypt": "^6.0.0",
     "common": "^0.2.5",
     "config": "^3.2.5",
     "debug": "^4.1.1",
